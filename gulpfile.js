@@ -1,36 +1,50 @@
 "use strict";
 var gulp = require("gulp");
-var sourcemaps = require("gulp-sourcemaps");
-var babel = require("gulp-babel");
-var concat = require("gulp-concat");
+var sourcemaps = require('gulp-sourcemaps');
+var source = require('vinyl-source-stream');
+var buffer = require('vinyl-buffer');
+var browserify = require('browserify');
+var watchify = require('watchify');
+var babel = require('babelify');
 var eslint = require("gulp-eslint");
 
-
 var srcLocation = "./src/**/*.js";
+
 gulp.task("html", function() {
-    gulp.src('./index.html')
+    gulp.src('./src/**/*.html')
         .pipe(gulp.dest('./dist'));
 
 });
 
-gulp.task("lint", function() {
-    return gulp.src(srcLocation)
-        .pipe(eslint())
-        .pipe(eslint.format())
-        .pipe(eslint.failAfterError());
-});
+function compile(watch) {
+    var bundler = watchify(browserify('./src/main.js', { debug: true }).transform(babel));
 
-gulp.task("js", function () {
-    return gulp.src(srcLocation)
-        .pipe(sourcemaps.init())
-        .pipe(babel())
-        .pipe(concat("bundle.js"))
-        .pipe(sourcemaps.write("."))
-        .pipe(gulp.dest("./dist"));
-});
+    function rebundle() {
+        bundler.bundle()
+            .on('error', function(err) { console.error(err); this.emit('end'); })
+            .pipe(source('bundle.js'))
+            .pipe(buffer())
+            .pipe(sourcemaps.init({ loadMaps: true }))
+            .pipe(sourcemaps.write('./'))
+            .pipe(gulp.dest('./dist'));
+    }
 
-gulp.task("watch", function(){
-    gulp.watch(srcLocation, ["lint", "js"]);
-});
+    if (watch) {
+        bundler.on('update', function() {
+            console.log('-> bundling...');
+            rebundle();
+        });
+    }
 
-gulp.task("default", ["html", "lint", "js"]);
+    rebundle();
+}
+
+function watch() {
+    return compile(true);
+};
+
+gulp.task('build', function() { return compile(); });
+gulp.task('watch', function() { return watch(); });
+
+gulp.task('default', ['build','watch']);
+//gulp.task("default", ["html", "lint", "js", "watch"]);
