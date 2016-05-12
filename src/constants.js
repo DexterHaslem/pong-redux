@@ -7,11 +7,16 @@ export const Constants = {
     MOUSEMOVE: "_moouseMove", // Symbol("mouseMOve"),
     KEYDOWN: "_keydown", //Symbol("keyDown"),
 
-    Left: "_left",
-    Right: "_right",
+    Direction: {
+        Left: "_left",
+        Right: "_right",
+        Up: "_up",
+        Down: "_down"
+    },
 
-    WIDTH: 800,
-    HEIGHT: 600,
+    WIDTH: 1024,
+    HEIGHT: 768,
     PADDLE_WIDTH: 20,
-    PADDLE_HEIGHT: 100,
-}
+    PADDLE_HEIGHT: 100
+};
+

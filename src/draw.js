@@ -11,17 +11,12 @@ export class Draw {
     update(state) {
         let ctx = this.ctx;
         ctx.font = "20px Georgia";
-        ctx.fillStyle = "white";
-        ctx.fillRect(0, 0, Constants.WIDTH, Constants.HEIGHT);
         ctx.fillStyle = "black";
-        ctx.font = "20px Verdana";
-// Create gradient
-        var gradient = ctx.createLinearGradient(0, 0, Constants.WIDTH, 0);
-        gradient.addColorStop("0", "magenta");
-        gradient.addColorStop("0.5", "blue");
-        gradient.addColorStop("1.0", "red");
-// Fill with gradient
-        ctx.fillStyle = gradient;
-        ctx.fillText(JSON.stringify(state), 10, 25);
+        ctx.fillRect(0, 0, Constants.WIDTH, Constants.HEIGHT);
+
+        ctx.fillStyle = "white";
+        ctx.font = "12px Verdana";
+        ctx.fillStyle = "white";
+        ctx.fillText("pong: " + state.player.x, Constants.WIDTH / 2 - 50, 25);//JSON.stringify(state), 10, 25);
     }
 }
