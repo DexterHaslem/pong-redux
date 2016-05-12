@@ -1,7 +1,7 @@
 export const Constants = {
     GAME_TICK: "_gameTick",
 
-    GAME_TICK_MS: 55, // 16.6 60fps
+    GAME_TICK_MS: 18, // 16.6 60fps
 
     CLICK: "_click",//Symbol("CLICK"),
     MOUSEMOVE: "_moouseMove", // Symbol("mouseMOve"),
