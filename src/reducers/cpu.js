@@ -5,15 +5,17 @@
 "use strict";
 
 import {Constants} from '../Constants';
+import Immutable from 'immutable';
+import * as R from 'ramda';
 
 let getDefaultCpuState = () => {
-    return {
+    return Immutable.Map({
         x: Constants.WIDTH - Constants.PADDLE_WIDTH,
         y: 10
-    };
+    });
 };
 
-export const cpu = function(state = getDefaultCpuState, action) {
+export const cpu = function(state = getDefaultCpuState(), action) {
     switch (action.type) {
 
     }

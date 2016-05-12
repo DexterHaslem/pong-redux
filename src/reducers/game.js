@@ -5,20 +5,23 @@
 "use strict";
 
 import {Constants} from '../Constants';
-
+import Immutable from 'immutable';
+import * as R from 'ramda';
 
 let getDefaultGameState = () => {
-    return {
+    return Immutable.Map({
         playerScore: 0,
         cpuScore: 0,
-
-        ballSpeed: 50,
-        ballDirection: Constants.Direction.Left
-    }
+        message: ''
+    });
 };
 
-export const game = function(state = getDefaultGameState, action) {
+export const game = function(state = getDefaultGameState(), action) {
     switch (action.type) {
+        case Constants.GAME_TICK:
+            return Immutable.Map({
+
+            });
 
     }
     return state;
