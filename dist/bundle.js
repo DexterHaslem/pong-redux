@@ -21,5 +21,5 @@ var App = function () {
 
 var a = new App();
 
-a.tes();
+a.test();
 //# sourceMappingURL=bundle.js.map
