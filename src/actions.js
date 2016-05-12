@@ -15,7 +15,9 @@ export class Actions {
         let self = this;
         
         // hook up all the events we care about to generate actions from
-        canvas.onkeydown = this.onKeyDown.bind(self);
+        // :(
+        document.addEventListener('keydown', this.onKeyDown.bind(self));
+        //canvas.onkeydown = this.onKeyDown.bind(self);
         canvas.onclick = this.onClick.bind(self);
         canvas.onmousemove = this.onMouseMove.bind(self);
         

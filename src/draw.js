@@ -26,10 +26,17 @@ export class Draw {
         ctx.fillStyle = "white";
         ctx.font = "12px Verdana";
         ctx.fillStyle = "white";
+        //let playerY = state.player.get('y');
         ctx.fillText("redux pong", halfWidth - 25, 25);//JSON.stringify(state), 10, 25);
 
-        ctx.fillRect(state.ball.get('x'), state.ball.get('y'), state.ball.get('diameter'), state.ball.get('diameter'));
+        let player = state.get('player');
+        let ball = state.get('ball');
 
-        ctx.fillRect(state.player.get('x'), state.player.get('y'), Constants.PADDLE_WIDTH, Constants.PADDLE_HEIGHT);
+        ctx.fillText("Player: " + state.get('playerScore'), 5, Constants.HEIGHT - 25);//JSON.stringify(state), 10, 25);
+        ctx.fillText("CPU: " + state.get('playerScore'), Constants.WIDTH - 50, Constants.HEIGHT - 25);//JSON.stringify(state), 10, 25);
+        ctx.fillRect(ball.get('x'), ball.get('y'), ball.get('diameter'), ball.get('diameter'));
+
+        ctx.fillRect(player.get('x'), player.get('y'), Constants.PADDLE_WIDTH, Constants.PADDLE_HEIGHT);
+        ctx.fillRect(state.get('cpu_x'), state.get('cpu_y'), Constants.PADDLE_WIDTH, Constants.PADDLE_HEIGHT);
     }
 }

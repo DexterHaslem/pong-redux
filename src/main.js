@@ -4,17 +4,12 @@ import { createStore, combineReducers } from "redux";
 import { Draw } from "./draw";
 import { Actions } from "./actions";
 import { Constants } from './Constants';
-
-import { cpu } from './reducers/cpu';
 import { game } from './reducers/game';
-import { player } from './reducers/player';
-import { ball } from './reducers/ball';
-
 let canvas = document.getElementById("canvas");
 canvas.width = Constants.WIDTH;
 canvas.height = Constants.HEIGHT;
-console.log(cpu);
-let gameStore = createStore(combineReducers({cpu, game, player, ball}));
+//console.log(cpu);
+let gameStore = createStore(game);
 let actions = new Actions(gameStore, canvas);
 let draw = new Draw(canvas.getContext("2d"));
 

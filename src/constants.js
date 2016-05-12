@@ -1,7 +1,7 @@
 export const Constants = {
     GAME_TICK: "_gameTick",
 
-    GAME_TICK_MS: 25, // 16.6 60fps
+    GAME_TICK_MS: 55, // 16.6 60fps
 
     CLICK: "_click",//Symbol("CLICK"),
     MOUSEMOVE: "_moouseMove", // Symbol("mouseMOve"),
@@ -17,7 +17,8 @@ export const Constants = {
     WIDTH: 800,
     HEIGHT: 600,
     PADDLE_WIDTH: 20,
-    PADDLE_HEIGHT: 100
+    PADDLE_HEIGHT: 100,
+    EDGE_PAD: 6
 };
 
 export default Constants;
