@@ -14929,11 +14929,18 @@ var Draw = exports.Draw = function () {
         key: "drawScores",
         value: function drawScores(ctx, state, halfWidth) {
             ctx.fillStyle = "white";
-            ctx.font = "12px Verdana";
+            ctx.font = "14px Verdana";
 
-            ctx.fillText("redux pong", halfWidth - 25, 25); //JSON.stringify(state), 10, 25);
-            ctx.fillText("Player: " + state.get('playerScore'), 5, _constants.Constants.HEIGHT - 25); //JSON.stringify(state), 10, 25);
-            ctx.fillText("CPU: " + state.get('cpuScore'), _constants.Constants.WIDTH - 50, _constants.Constants.HEIGHT - 25); //JSON.stringify(state), 10, 25);
+            ctx.fillText("redux pong", halfWidth - 25, 15); //JSON.stringify(state), 10, 25);
+            ctx.fillText("Player: " + state.get('playerScore'), 5, _constants.Constants.HEIGHT - 10); //JSON.stringify(state), 10, 25);
+            ctx.fillText("CPU: " + state.get('cpuScore'), _constants.Constants.WIDTH - 100, _constants.Constants.HEIGHT - 10); //JSON.stringify(state), 10, 25);
+
+            var msg = state.get('message');
+            if (msg != '') {
+                ctx.font = "16px Verdana";
+                ctx.fillStyle = "rgb(184,55,111)";
+                ctx.fillText(msg, halfWidth - 25, 285);
+            }
         }
     }, {
         key: "drawBats",
@@ -15085,9 +15092,9 @@ var getDefault = function getDefault() {
 
 // only do these once to emulate a random 'difficulty'.
 // player max speed is 10. allow us to get slightly faster
-var maxSpeed = 15;
-var speed = Math.round(Math.max(7, Math.random() * maxSpeed));
-var sensitivity = Math.round(Math.max(3, Math.random() * 5));
+var maxSpeed = 16;
+var speed = Math.round(Math.max(8, Math.random() * maxSpeed));
+var sensitivity = Math.round(Math.max(2, Math.random() * 6));
 
 var cpu = exports.cpu = function cpu() {
     var state = arguments.length <= 0 || arguments[0] === undefined ? getDefault() : arguments[0];
@@ -15168,6 +15175,8 @@ var getDefaultGameState = function getDefaultGameState() {
     });
 };
 
+var messageTickLength = _Constants.Constants.GAME_TICK_MS; // we are 30fps, so show for 1 second
+
 var game = exports.game = function game() {
     var state = arguments.length <= 0 || arguments[0] === undefined ? getDefaultGameState() : arguments[0];
     var action = arguments[1];
@@ -15176,16 +15185,34 @@ var game = exports.game = function game() {
     switch (action.type) {
         case _Constants.Constants.CPU_SCORE:
             return state.merge({
-                cpuScore: state.get('cpuScore') + 1
+                cpuScore: state.get('cpuScore') + 1,
+                message: "CPU scores!",
+                messageTicks: messageTickLength
             });
             break;
 
         case _Constants.Constants.PLAYER_SCORE:
             return state.merge({
-                playerScore: state.get('playerScore') + 1
+                playerScore: state.get('playerScore') + 1,
+                message: "player scores!",
+                messageTicks: messageTickLength
             });
             break;
-
+        case _Constants.Constants.GAME_TICK:
+            var msg = state.get('message');
+            var ticks = state.get('messageTicks');
+            if (msg === '' || ticks === 0) {
+                return state;
+            }
+            ticks -= 1;
+            if (ticks <= 0) {
+                ticks = 0;
+                msg = '';
+            }
+            return state.merge({
+                message: msg,
+                messageTicks: ticks
+            });
     }
     return state;
 };

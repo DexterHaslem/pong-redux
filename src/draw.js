@@ -28,11 +28,18 @@ export class Draw {
 
     static drawScores(ctx, state, halfWidth) {
         ctx.fillStyle = "white";
-        ctx.font = "12px Verdana";
+        ctx.font = "14px Verdana";
 
-        ctx.fillText("redux pong", halfWidth - 25, 25);//JSON.stringify(state), 10, 25);
-        ctx.fillText("Player: " + state.get('playerScore'), 5, Constants.HEIGHT - 25);//JSON.stringify(state), 10, 25);
-        ctx.fillText("CPU: " + state.get('cpuScore'), Constants.WIDTH - 50, Constants.HEIGHT - 25);//JSON.stringify(state), 10, 25);
+        ctx.fillText("redux pong", halfWidth - 25, 15);//JSON.stringify(state), 10, 25);
+        ctx.fillText("Player: " + state.get('playerScore'), 5, Constants.HEIGHT - 10);//JSON.stringify(state), 10, 25);
+        ctx.fillText("CPU: " + state.get('cpuScore'), Constants.WIDTH - 100, Constants.HEIGHT - 10);//JSON.stringify(state), 10, 25);
+
+        let msg = state.get('message');
+        if (msg != '') {
+            ctx.font = "16px Verdana";
+            ctx.fillStyle = "rgb(184,55,111)";
+            ctx.fillText(msg, halfWidth - 25, 285);
+        }
     }
 
     static drawBats(ctx, state) {

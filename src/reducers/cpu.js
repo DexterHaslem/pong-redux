@@ -17,9 +17,9 @@ let getDefault = () => {
 
 // only do these once to emulate a random 'difficulty'.
 // player max speed is 10. allow us to get slightly faster
-const maxSpeed = 15;
-const speed = Math.round(Math.max(7, Math.random() * maxSpeed));
-const sensitivity = Math.round(Math.max(3, Math.random() * 5));
+const maxSpeed = 16;
+const speed = Math.round(Math.max(8, Math.random() * maxSpeed));
+const sensitivity = Math.round(Math.max(2, Math.random() * 6));
 
 export const cpu = (state = getDefault(), action) => {
     switch (action.type) {
