@@ -8,12 +8,9 @@ var watchify = require('watchify');
 var babel = require('babelify');
 var eslint = require("gulp-eslint");
 
-var srcLocation = "./src/**/*.js";
-
 gulp.task("html", function() {
     gulp.src('./src/**/*.html')
         .pipe(gulp.dest('./dist'));
-
 });
 
 function compile(watch) {
