@@ -14704,15 +14704,15 @@ var GameActions = exports.GameActions = function () {
             var cpuY = state.cpu.get('y');
             if (state.ball.get('x') + state.ball.get('diameter') >= _constants.Constants.WIDTH - _constants.Constants.PADDLE_WIDTH - _constants.Constants.EDGE_PAD && ballY >= cpuY && ballY <= cpuY + _constants.Constants.PADDLE_HEIGHT) {
                 // deflected by cpu
-                return _constants.Constants.Direction.Left;
+                return true;
             }
 
             if (state.ball.get('x') <= _constants.Constants.PADDLE_WIDTH - _constants.Constants.EDGE_PAD && ballY >= playerY && ballY <= playerY + _constants.Constants.PADDLE_HEIGHT) {
                 // deflected by player
-                return _constants.Constants.Direction.Right;
+                return true;
             }
 
-            return null;
+            return false;
         }
     }, {
         key: "gameTick",
@@ -14727,8 +14727,8 @@ var GameActions = exports.GameActions = function () {
             // (ball movement is handled automatically)
 
             // so now lets check gamestate!
-            var deflected = this.ballDeflected(state);
-            if (!deflected) {
+
+            if (!this.ballDeflected(state)) {
                 if (this.playerScored(state)) {
                     this._store.dispatch({ type: _constants.Constants.PLAYER_SCORE });
                     this._store.dispatch({ type: _constants.Constants.RESET_BALL });
@@ -14743,8 +14743,8 @@ var GameActions = exports.GameActions = function () {
                 }
             } else {
                 this._store.dispatch({
-                    type: _constants.Constants.BALL_DEFLECTED,
-                    newDirection: deflected
+                    type: _constants.Constants.BALL_DEFLECTED
+                    //newDirection: deflected
                 });
             }
         }
@@ -14981,11 +14981,24 @@ function getDefault() {
     return _immutable2.default.Map({
         speed: 10,
         diameter: 15,
+        angle: 0,
         direction: _Constants.Constants.Direction.Left,
         x: _Constants.Constants.WIDTH / 2,
         y: _Constants.Constants.HEIGHT / 2,
         ticks: 0
     });
+}
+
+function getRandomAngle() {
+    // when we are deflected add some random angle
+    // to our movement vector
+    // an angle of 0 goes straight left/right.
+    // negative angle goes up towards 0 on y
+    // positive towards bottom of screen, keep same
+    // coordinate system
+    var ang = Math.random() * 10;
+    var negative = Math.round(Math.random()) > 0;
+    return negative ? -ang : ang;
 }
 
 var ball = exports.ball = function ball() {
@@ -15000,6 +15013,7 @@ var ball = exports.ball = function ball() {
             var isLeft = dir === _Constants.Constants.Direction.Left;
             var newX = x + (isLeft ? -speed : speed);
             var rightEdge = _Constants.Constants.WIDTH - state.get('diameter');
+
             if (newX < 1 && isLeft) {
                 isLeft = false;
                 newX = 1;
@@ -15007,6 +15021,8 @@ var ball = exports.ball = function ball() {
                 isLeft = true;
                 newX = rightEdge;
             }
+            // TODO: handle angle and convert direction to a vector
+
             return state.merge({
                 x: newX,
                 direction: isLeft ? _Constants.Constants.Direction.Left : _Constants.Constants.Direction.Right
@@ -15018,7 +15034,10 @@ var ball = exports.ball = function ball() {
         case _Constants.Constants.BALL_DEFLECTED:
             // something we're unaware of hit us (paddle)
             return state.merge({
-                direction: action.newDirection
+                // just swithc current direction
+                //direction: action.newDirection,
+                direction: state.get('direction') == _Constants.Constants.Direction.Left ? _Constants.Constants.Direction.Right : _Constants.Constants.Direction.Left,
+                angle: getRandomAngle()
             });
     }
     return state;

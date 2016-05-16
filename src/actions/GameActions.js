@@ -30,16 +30,16 @@ export class GameActions  {
         if (((state.ball.get('x') + state.ball.get('diameter')) >= Constants.WIDTH - (Constants.PADDLE_WIDTH) - Constants.EDGE_PAD)
             && (ballY >= cpuY && ballY <= cpuY + Constants.PADDLE_HEIGHT)) {
             // deflected by cpu
-            return Constants.Direction.Left;
+            return true;
         }
 
         if (((state.ball.get('x')) <= Constants.PADDLE_WIDTH - Constants.EDGE_PAD)
             && (ballY >= playerY && ballY <= playerY + Constants.PADDLE_HEIGHT)) {
             // deflected by player
-            return Constants.Direction.Right;
+            return true;
         }
 
-        return null;
+        return false
     }
 
     gameTick() {
@@ -53,8 +53,8 @@ export class GameActions  {
         // (ball movement is handled automatically)
         
         // so now lets check gamestate!
-        let deflected = this.ballDeflected(state);
-        if (!deflected) {
+
+        if (!this.ballDeflected(state)) {
             if (this.playerScored(state)) {
                 this._store.dispatch({type: Constants.PLAYER_SCORE});
                 this._store.dispatch({type: Constants.RESET_BALL});
@@ -70,8 +70,8 @@ export class GameActions  {
             }
         } else {
             this._store.dispatch({
-                type: Constants.BALL_DEFLECTED,
-                newDirection: deflected
+                type: Constants.BALL_DEFLECTED
+                //newDirection: deflected
             });
         }
     }

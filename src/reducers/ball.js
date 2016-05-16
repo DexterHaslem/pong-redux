@@ -12,11 +12,24 @@ function getDefault() {
     return Immutable.Map({
         speed: 10,
         diameter: 15,
+        angle: 0,
         direction: Constants.Direction.Left,
         x: Constants.WIDTH / 2,
         y: Constants.HEIGHT / 2,
         ticks: 0
     });
+}
+
+function getRandomAngle() {
+    // when we are deflected add some random angle
+    // to our movement vector
+    // an angle of 0 goes straight left/right.
+    // negative angle goes up towards 0 on y
+    // positive towards bottom of screen, keep same
+    // coordinate system
+    let ang = Math.random() * 10;
+    let negative = Math.round(Math.random()) > 0;
+    return negative ? -ang : ang;
 }
 
 export const ball = (state = getDefault(), action) => {
@@ -28,6 +41,7 @@ export const ball = (state = getDefault(), action) => {
             let isLeft = dir === Constants.Direction.Left;
             let newX = x + (isLeft ? -speed : speed);
             let rightEdge = Constants.WIDTH - state.get('diameter');
+
             if (newX < 1 && isLeft) {
                 isLeft = false;
                 newX = 1;
@@ -36,6 +50,8 @@ export const ball = (state = getDefault(), action) => {
                 isLeft = true;
                 newX = rightEdge;
             }
+            // TODO: handle angle and convert direction to a vector
+            
             return state.merge({
                 x: newX,
                 direction: isLeft ? Constants.Direction.Left : Constants.Direction.Right,
@@ -47,7 +63,12 @@ export const ball = (state = getDefault(), action) => {
         case Constants.BALL_DEFLECTED:
             // something we're unaware of hit us (paddle)
             return state.merge({
-                direction: action.newDirection
+                // just swithc current direction
+                //direction: action.newDirection,
+                direction: state.get('direction') == Constants.Direction.Left ?
+                    Constants.Direction.Right :
+                    Constants.Direction.Left,
+                angle: getRandomAngle()
             });
     }
     return state;
