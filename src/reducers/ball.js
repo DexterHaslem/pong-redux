@@ -41,7 +41,14 @@ export const ball = (state = getDefault(), action) => {
                 direction: isLeft ? Constants.Direction.Left : Constants.Direction.Right,
                 //ticks: state.get('ticks') + 1
             });
-
+        case Constants.RESET_BALL:
+            // TODO: random direction + angle
+            return getDefault();
+        case Constants.BALL_DEFLECTED:
+            // something we're unaware of hit us (paddle)
+            return state.merge({
+                direction: action.newDirection
+            });
     }
     return state;
 };

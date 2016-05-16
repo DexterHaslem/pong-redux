@@ -10,7 +10,8 @@ import * as R from 'ramda';
 let getDefault = () => {
     return Immutable.Map({
         x: Constants.WIDTH - Constants.PADDLE_WIDTH - Constants.EDGE_PAD,
-        y: Constants.EDGE_PAD
+        y: Constants.EDGE_PAD,
+        direction: Constants.Direction.Up
     });
 };
 

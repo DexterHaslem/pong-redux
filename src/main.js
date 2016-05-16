@@ -1,7 +1,7 @@
 "use strict";
 
 import { createStore, combineReducers } from "redux";
-import { Draw } from "./draw";
+
 import { PlayerActions } from "./actions/PlayerActions";
 import { GameActions } from "./actions/GameActions";
 import { Constants } from './Constants';
@@ -23,9 +23,9 @@ let gameStore = createStore(combineReducers({
 }));
 
 let playerActions = new PlayerActions(gameStore);
-let gameActions = new GameActions(gameStore);
+//let ctx = canvas.getContext("2d");
+//let unsubscribe = gameStore.subscribe(() => Draw.update(ctx, gameStore.getState()));
+// we will let game actions handle redrawing directly since it's driving game loop
+let gameActions = new GameActions(gameStore, canvas.getContext("2d"));
 
 playerActions.subscribeEvents(canvas);
-
-let ctx = canvas.getContext("2d");
-let unsubscribe = gameStore.subscribe(() => Draw.update(ctx, gameStore.getState()));

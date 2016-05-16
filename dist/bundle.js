@@ -14668,21 +14668,53 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 var _constants = require("../constants");
 
+var _draw = require("../draw");
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var GameActions = exports.GameActions = function () {
-    function GameActions(store) {
+    function GameActions(store, drawCtx) {
         var _this = this;
 
         _classCallCheck(this, GameActions);
 
         this._store = store;
+        this._ctx = drawCtx;
         this.tickToken = setInterval(function () {
             _this.gameTick();
         }, _constants.Constants.GAME_TICK_MS);
     }
 
     _createClass(GameActions, [{
+        key: "playerScored",
+        value: function playerScored(state) {
+            return state.ball.get('x') + state.ball.get('diameter') > _constants.Constants.WIDTH - _constants.Constants.PADDLE_WIDTH / 2 - _constants.Constants.EDGE_PAD;
+        }
+    }, {
+        key: "CPUScored",
+        value: function CPUScored(state) {
+            return state.ball.get('x') < _constants.Constants.PADDLE_WIDTH / 2 + _constants.Constants.EDGE_PAD;
+        }
+    }, {
+        key: "ballDeflected",
+        value: function ballDeflected(state) {
+            // check ball was hit by player/cpu paddle and return new direction if so
+            var ballY = state.ball.get('y');
+            var playerY = state.player.get('y');
+            var cpuY = state.cpu.get('y');
+            if (state.ball.get('x') + state.ball.get('diameter') >= _constants.Constants.WIDTH - _constants.Constants.PADDLE_WIDTH - _constants.Constants.EDGE_PAD && ballY >= cpuY && ballY <= cpuY + _constants.Constants.PADDLE_HEIGHT) {
+                // deflected by cpu
+                return _constants.Constants.Direction.Left;
+            }
+
+            if (state.ball.get('x') <= _constants.Constants.PADDLE_WIDTH - _constants.Constants.EDGE_PAD && ballY >= playerY && ballY <= playerY + _constants.Constants.PADDLE_HEIGHT) {
+                // deflected by player
+                return _constants.Constants.Direction.Right;
+            }
+
+            return null;
+        }
+    }, {
         key: "gameTick",
         value: function gameTick() {
             // first get latest gamestate
@@ -14694,14 +14726,34 @@ var GameActions = exports.GameActions = function () {
             // game state
             // (ball movement is handled automatically)
 
-            // so now lets check gamestate
+            // so now lets check gamestate!
+            var deflected = this.ballDeflected(state);
+            if (!deflected) {
+                if (this.playerScored(state)) {
+                    this._store.dispatch({ type: _constants.Constants.PLAYER_SCORE });
+                    this._store.dispatch({ type: _constants.Constants.RESET_BALL });
+                } else if (this.CPUScored(state)) {
+                    this._store.dispatch({ type: _constants.Constants.CPU_SCORE });
+                    this._store.dispatch({ type: _constants.Constants.RESET_BALL });
+                }
+
+                if (this._ctx) {
+                    // draw *latest* state, not one that just drove gameplay decisions
+                    _draw.Draw.update(this._ctx, this._store.getState());
+                }
+            } else {
+                this._store.dispatch({
+                    type: _constants.Constants.BALL_DEFLECTED,
+                    newDirection: deflected
+                });
+            }
         }
     }]);
 
     return GameActions;
 }();
 
-},{"../constants":19}],18:[function(require,module,exports){
+},{"../constants":19,"../draw":20}],18:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -14803,7 +14855,14 @@ var Constants = exports.Constants = {
     HEIGHT: 600,
     PADDLE_WIDTH: 20,
     PADDLE_HEIGHT: 100,
-    EDGE_PAD: 4
+    EDGE_PAD: 4,
+
+    PLAYER_SCORE: "_playerScore",
+    CPU_SCORE: "_CPUScore",
+    RESET_BALL: "_resetBall",
+    BALL_DEFLECTED: "_ballDeflected",
+
+    SET_GAME_MESSAGE: "_setGameMessage"
 };
 
 exports.default = Constants;
@@ -14867,7 +14926,7 @@ var Draw = exports.Draw = function () {
 
             ctx.fillText("redux pong", halfWidth - 25, 25); //JSON.stringify(state), 10, 25);
             ctx.fillText("Player: " + state.get('playerScore'), 5, _constants.Constants.HEIGHT - 25); //JSON.stringify(state), 10, 25);
-            ctx.fillText("CPU: " + state.get('playerScore'), _constants.Constants.WIDTH - 50, _constants.Constants.HEIGHT - 25); //JSON.stringify(state), 10, 25);
+            ctx.fillText("CPU: " + state.get('cpuScore'), _constants.Constants.WIDTH - 50, _constants.Constants.HEIGHT - 25); //JSON.stringify(state), 10, 25);
         }
     }, {
         key: "drawBats",
@@ -14952,9 +15011,16 @@ var ball = exports.ball = function ball() {
                 x: newX,
                 direction: isLeft ? _Constants.Constants.Direction.Left : _Constants.Constants.Direction.Right
             });
-
+        //ticks: state.get('ticks') + 1
+        case _Constants.Constants.RESET_BALL:
+            // TODO: random direction + angle
+            return getDefault();
+        case _Constants.Constants.BALL_DEFLECTED:
+            // something we're unaware of hit us (paddle)
+            return state.merge({
+                direction: action.newDirection
+            });
     }
-    //ticks: state.get('ticks') + 1
     return state;
 };
 
@@ -14986,7 +15052,8 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 var getDefault = function getDefault() {
     return _immutable2.default.Map({
         x: _Constants.Constants.WIDTH - _Constants.Constants.PADDLE_WIDTH - _Constants.Constants.EDGE_PAD,
-        y: _Constants.Constants.EDGE_PAD
+        y: _Constants.Constants.EDGE_PAD,
+        direction: _Constants.Constants.Direction.Up
     });
 };
 
@@ -15027,7 +15094,10 @@ var getDefaultGameState = function getDefaultGameState() {
     return _immutable2.default.Map({
         //ticks: 0,
         playerScore: 0,
-        cpuScore: 0
+        cpuScore: 0,
+
+        message: '',
+        messageTicks: 0
     });
 };
 
@@ -15035,17 +15105,22 @@ var game = exports.game = function game() {
     var state = arguments.length <= 0 || arguments[0] === undefined ? getDefaultGameState() : arguments[0];
     var action = arguments[1];
 
-    var interim = _immutable2.default.Map({
-        playerScore: 0,
-        cpuScore: 0
-    });
+
     switch (action.type) {
-        case _Constants.Constants.GAME_TICK:
-            // TODO:
+        case _Constants.Constants.CPU_SCORE:
+            return state.merge({
+                cpuScore: state.get('cpuScore') + 1
+            });
+            break;
+
+        case _Constants.Constants.PLAYER_SCORE:
+            return state.merge({
+                playerScore: state.get('playerScore') + 1
+            });
             break;
 
     }
-    return interim;
+    return state;
 };
 
 exports.default = game;
@@ -15149,8 +15224,6 @@ var player = exports.player = function player() {
 
 var _redux = require("redux");
 
-var _draw = require("./draw");
-
 var _PlayerActions = require("./actions/PlayerActions");
 
 var _GameActions = require("./actions/GameActions");
@@ -15177,16 +15250,14 @@ var gameStore = (0, _redux.createStore)((0, _redux.combineReducers)({
 }));
 
 var playerActions = new _PlayerActions.PlayerActions(gameStore);
-var gameActions = new _GameActions.GameActions(gameStore);
+//let ctx = canvas.getContext("2d");
+//let unsubscribe = gameStore.subscribe(() => Draw.update(ctx, gameStore.getState()));
+// we will let game actions handle redrawing directly since it's driving game loop
+var gameActions = new _GameActions.GameActions(gameStore, canvas.getContext("2d"));
 
 playerActions.subscribeEvents(canvas);
 
-var ctx = canvas.getContext("2d");
-var unsubscribe = gameStore.subscribe(function () {
-    return _draw.Draw.update(ctx, gameStore.getState());
-});
-
-},{"./Constants":19,"./actions/GameActions":17,"./actions/PlayerActions":18,"./draw":20,"./reducers/ball":21,"./reducers/cpu":22,"./reducers/game":23,"./reducers/player":24,"redux":9}]},{},[25])
+},{"./Constants":19,"./actions/GameActions":17,"./actions/PlayerActions":18,"./reducers/ball":21,"./reducers/cpu":22,"./reducers/game":23,"./reducers/player":24,"redux":9}]},{},[25])
 
 
 //# sourceMappingURL=bundle.js.map

@@ -32,7 +32,7 @@ export class Draw {
 
         ctx.fillText("redux pong", halfWidth - 25, 25);//JSON.stringify(state), 10, 25);
         ctx.fillText("Player: " + state.get('playerScore'), 5, Constants.HEIGHT - 25);//JSON.stringify(state), 10, 25);
-        ctx.fillText("CPU: " + state.get('playerScore'), Constants.WIDTH - 50, Constants.HEIGHT - 25);//JSON.stringify(state), 10, 25);
+        ctx.fillText("CPU: " + state.get('cpuScore'), Constants.WIDTH - 50, Constants.HEIGHT - 25);//JSON.stringify(state), 10, 25);
     }
 
     static drawBats(ctx, state) {

@@ -18,7 +18,14 @@ export const Constants = {
     HEIGHT: 600,
     PADDLE_WIDTH: 20,
     PADDLE_HEIGHT: 100,
-    EDGE_PAD: 4
+    EDGE_PAD: 4,
+
+    PLAYER_SCORE: "_playerScore",
+    CPU_SCORE: "_CPUScore",
+    RESET_BALL: "_resetBall",
+    BALL_DEFLECTED: "_ballDeflected",
+
+    SET_GAME_MESSAGE: "_setGameMessage"
 };
 
 export default Constants;
