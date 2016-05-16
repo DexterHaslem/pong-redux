@@ -57,8 +57,8 @@ export const player = (state = getDefaultPlayerState(), action) => {
             }
             else {
                 y -= adjustedDelta;
-                if (y <= 10) {
-                    y = 10;
+                if (y <= 2) {
+                    y = 2;
                     adjustedDelta = 0;
                 }
             }

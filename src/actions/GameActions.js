@@ -15,7 +15,7 @@ export class GameActions  {
     }
 
     playerScored(state) {
-        return (state.ball.get('x') + state.ball.get('diameter')) > Constants.WIDTH - (Constants.PADDLE_WIDTH / 2) - Constants.EDGE_PAD;
+        return (state.ball.get('x') + Constants.BALL_SIZE) > Constants.WIDTH - (Constants.PADDLE_WIDTH / 2) - Constants.EDGE_PAD;
     }
 
     CPUScored(state) {
@@ -27,7 +27,7 @@ export class GameActions  {
         let ballY = state.ball.get('y');
         let playerY = state.player.get('y');
         let cpuY = state.cpu.get('y');
-        if (((state.ball.get('x') + state.ball.get('diameter')) >= Constants.WIDTH - (Constants.PADDLE_WIDTH) - Constants.EDGE_PAD)
+        if (((state.ball.get('x') + Constants.BALL_SIZE) >= Constants.WIDTH - (Constants.PADDLE_WIDTH) - Constants.EDGE_PAD)
             && (ballY >= cpuY && ballY <= cpuY + Constants.PADDLE_HEIGHT)) {
             // deflected by cpu
             return true;
@@ -46,6 +46,12 @@ export class GameActions  {
         // first get latest gamestate
         this._store.dispatch({ type: Constants.GAME_TICK });
         let state = this._store.getState();
+
+        // this seems ghetto, fwd ball state to cpu ai to see what it does.
+        this._store.dispatch({
+            type: Constants.CPU_UPDATE,
+            ball: state.ball
+        });
 
         // all non player driven actions need to be here:
         // cpu movement

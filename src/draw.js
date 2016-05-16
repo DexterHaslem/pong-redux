@@ -23,7 +23,7 @@ export class Draw {
 
     static drawBall(ctx, ball) {
         ctx.fillStyle = "white";
-        ctx.fillRect(ball.get('x'), ball.get('y'), ball.get('diameter'), ball.get('diameter'));
+        ctx.fillRect(ball.get('x'), ball.get('y'), Constants.BALL_SIZE, Constants.BALL_SIZE);
     }
 
     static drawScores(ctx, state, halfWidth) {

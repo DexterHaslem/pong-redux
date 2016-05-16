@@ -11,7 +11,7 @@ import * as R from 'ramda';
 function getDefault() {
     return Immutable.Map({
         speed: 10,
-        diameter: 15,
+        //diameter: 15,
         angle: 0,
         direction: Constants.Direction.Left,
         x: Constants.WIDTH / 2,
@@ -40,7 +40,7 @@ export const ball = (state = getDefault(), action) => {
             let speed = state.get('speed');
             let isLeft = dir === Constants.Direction.Left;
             let newX = x + (isLeft ? -speed : speed);
-            let rightEdge = Constants.WIDTH - state.get('diameter');
+            let rightEdge = Constants.WIDTH - Constants.BALL_SIZE;
 
             if (newX < 1 && isLeft) {
                 isLeft = false;
@@ -63,7 +63,7 @@ export const ball = (state = getDefault(), action) => {
         case Constants.BALL_DEFLECTED:
             // something we're unaware of hit us (paddle)
             return state.merge({
-                // just swithc current direction
+                // just switch current direction
                 //direction: action.newDirection,
                 direction: state.get('direction') == Constants.Direction.Left ?
                     Constants.Direction.Right :

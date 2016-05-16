@@ -14688,7 +14688,7 @@ var GameActions = exports.GameActions = function () {
     _createClass(GameActions, [{
         key: "playerScored",
         value: function playerScored(state) {
-            return state.ball.get('x') + state.ball.get('diameter') > _constants.Constants.WIDTH - _constants.Constants.PADDLE_WIDTH / 2 - _constants.Constants.EDGE_PAD;
+            return state.ball.get('x') + _constants.Constants.BALL_SIZE > _constants.Constants.WIDTH - _constants.Constants.PADDLE_WIDTH / 2 - _constants.Constants.EDGE_PAD;
         }
     }, {
         key: "CPUScored",
@@ -14702,7 +14702,7 @@ var GameActions = exports.GameActions = function () {
             var ballY = state.ball.get('y');
             var playerY = state.player.get('y');
             var cpuY = state.cpu.get('y');
-            if (state.ball.get('x') + state.ball.get('diameter') >= _constants.Constants.WIDTH - _constants.Constants.PADDLE_WIDTH - _constants.Constants.EDGE_PAD && ballY >= cpuY && ballY <= cpuY + _constants.Constants.PADDLE_HEIGHT) {
+            if (state.ball.get('x') + _constants.Constants.BALL_SIZE >= _constants.Constants.WIDTH - _constants.Constants.PADDLE_WIDTH - _constants.Constants.EDGE_PAD && ballY >= cpuY && ballY <= cpuY + _constants.Constants.PADDLE_HEIGHT) {
                 // deflected by cpu
                 return true;
             }
@@ -14720,6 +14720,12 @@ var GameActions = exports.GameActions = function () {
             // first get latest gamestate
             this._store.dispatch({ type: _constants.Constants.GAME_TICK });
             var state = this._store.getState();
+
+            // this seems ghetto, fwd ball state to cpu ai to see what it does.
+            this._store.dispatch({
+                type: _constants.Constants.CPU_UPDATE,
+                ball: state.ball
+            });
 
             // all non player driven actions need to be here:
             // cpu movement
@@ -14856,12 +14862,13 @@ var Constants = exports.Constants = {
     PADDLE_WIDTH: 20,
     PADDLE_HEIGHT: 100,
     EDGE_PAD: 4,
+    BALL_SIZE: 14,
 
     PLAYER_SCORE: "_playerScore",
     CPU_SCORE: "_CPUScore",
     RESET_BALL: "_resetBall",
     BALL_DEFLECTED: "_ballDeflected",
-
+    CPU_UPDATE: "_cpuUpdate",
     SET_GAME_MESSAGE: "_setGameMessage"
 };
 
@@ -14916,7 +14923,7 @@ var Draw = exports.Draw = function () {
         key: "drawBall",
         value: function drawBall(ctx, ball) {
             ctx.fillStyle = "white";
-            ctx.fillRect(ball.get('x'), ball.get('y'), ball.get('diameter'), ball.get('diameter'));
+            ctx.fillRect(ball.get('x'), ball.get('y'), _constants.Constants.BALL_SIZE, _constants.Constants.BALL_SIZE);
         }
     }, {
         key: "drawScores",
@@ -14980,7 +14987,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 function getDefault() {
     return _immutable2.default.Map({
         speed: 10,
-        diameter: 15,
+        //diameter: 15,
         angle: 0,
         direction: _Constants.Constants.Direction.Left,
         x: _Constants.Constants.WIDTH / 2,
@@ -15012,7 +15019,7 @@ var ball = exports.ball = function ball() {
             var speed = state.get('speed');
             var isLeft = dir === _Constants.Constants.Direction.Left;
             var newX = x + (isLeft ? -speed : speed);
-            var rightEdge = _Constants.Constants.WIDTH - state.get('diameter');
+            var rightEdge = _Constants.Constants.WIDTH - _Constants.Constants.BALL_SIZE;
 
             if (newX < 1 && isLeft) {
                 isLeft = false;
@@ -15034,7 +15041,7 @@ var ball = exports.ball = function ball() {
         case _Constants.Constants.BALL_DEFLECTED:
             // something we're unaware of hit us (paddle)
             return state.merge({
-                // just swithc current direction
+                // just switch current direction
                 //direction: action.newDirection,
                 direction: state.get('direction') == _Constants.Constants.Direction.Left ? _Constants.Constants.Direction.Right : _Constants.Constants.Direction.Left,
                 angle: getRandomAngle()
@@ -15076,11 +15083,52 @@ var getDefault = function getDefault() {
     });
 };
 
+// only do these once to emulate a random 'difficulty'.
+// player max speed is 10. allow us to get slightly faster
+var maxSpeed = 15;
+var speed = Math.round(Math.max(7, Math.random() * maxSpeed));
+var sensitivity = Math.round(Math.max(3, Math.random() * 5));
+
 var cpu = exports.cpu = function cpu() {
     var state = arguments.length <= 0 || arguments[0] === undefined ? getDefault() : arguments[0];
     var action = arguments[1];
 
-    return state;
+    switch (action.type) {
+        case _Constants.Constants.CPU_UPDATE:
+            // hey we've been asked to update! lets see where the ball is
+            var ball = action.ball;
+
+            // simple ai, try to move middle of paddle to ball x/y
+
+            var ballY = ball.get('y') - _Constants.Constants.BALL_SIZE / 2;
+            var topLimit = 2;
+            var bottomLimit = _Constants.Constants.HEIGHT - _Constants.Constants.PADDLE_HEIGHT - 2;
+
+            var y = state.get('y');
+            var mid = y + _Constants.Constants.PADDLE_HEIGHT / 2;
+            var delta = Math.abs(ballY - mid);
+
+            // prevent 'vibrating' on straight lines
+            if (delta < sensitivity) {
+                return state;
+            }
+
+            // if our delta is less than our speed,
+            // set speed to delta so we dont vibrate back and forth
+            var adjustedSpeed = delta < speed ? delta : speed;
+
+            if (mid < ballY) {
+                y = Math.min(y + adjustedSpeed, bottomLimit);
+            } else {
+                y = Math.max(y - adjustedSpeed, topLimit);
+            }
+            // but simulate the same max move speed player has
+            return state.merge({
+                y: y
+            });
+        default:
+            return state;
+    }
 };
 
 },{"../Constants":19,"immutable":1,"ramda":3}],23:[function(require,module,exports){
@@ -15222,8 +15270,8 @@ var player = exports.player = function player() {
                 }
             } else {
                 y -= adjustedDelta;
-                if (y <= 10) {
-                    y = 10;
+                if (y <= 2) {
+                    y = 2;
                     adjustedDelta = 0;
                 }
             }
