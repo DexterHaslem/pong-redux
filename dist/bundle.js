@@ -14660,68 +14660,96 @@ module.exports = function symbolObservablePonyfill(root) {
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-var Constants = exports.Constants = {
-    GAME_TICK: "_gameTick",
+exports.GameActions = undefined;
 
-    GAME_TICK_MS: 25, // 16.6 60fps
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); /**
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      * Created by Dexter on 5/15/2016.
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      */
 
-    CLICK: "_click", //Symbol("CLICK"),
-    MOUSEMOVE: "_moouseMove", // Symbol("mouseMOve"),
-    KEYDOWN: "_keydown", //Symbol("keyDown"),
+var _constants = require("../constants");
 
-    Direction: {
-        Left: "_left",
-        Right: "_right",
-        Up: "_up",
-        Down: "_down"
-    },
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-    WIDTH: 800,
-    HEIGHT: 600,
-    PADDLE_WIDTH: 20,
-    PADDLE_HEIGHT: 100
-};
+var GameActions = exports.GameActions = function () {
+    function GameActions(store) {
+        var _this = this;
 
-exports.default = Constants;
+        _classCallCheck(this, GameActions);
 
-},{}],18:[function(require,module,exports){
-"use strict";
+        this._store = store;
+        this.tickToken = setInterval(function () {
+            _this.gameTick();
+        }, _constants.Constants.GAME_TICK_MS);
+    }
+
+    _createClass(GameActions, [{
+        key: "gameTick",
+        value: function gameTick() {
+            // first get latest gamestate
+            this._store.dispatch({ type: _constants.Constants.GAME_TICK });
+            var state = this._store.getState();
+
+            // all non player driven actions need to be here:
+            // cpu movement
+            // game state
+            // (ball movement is handled automatically)
+
+            // so now lets check gamestate
+        }
+    }]);
+
+    return GameActions;
+}();
+
+},{"../constants":19}],18:[function(require,module,exports){
+'use strict';
 
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.Actions = undefined;
+exports.PlayerActions = undefined;
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); /**
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       * Created by Dexter on 5/11/2016.
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       */
 
-var _constants = require("./constants");
+var _constants = require('../constants');
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Actions = exports.Actions = function () {
-    function Actions(store, canvas) {
-        _classCallCheck(this, Actions);
+var PlayerActions = exports.PlayerActions = function () {
+    function PlayerActions(store) {
+        _classCallCheck(this, PlayerActions);
 
         this._store = store;
-        // not sure how or why, but 'this' ends up as WINDOW in game tick.
-        // seems like a transpile bug or setInterval binding by default.
-        // same thing happens with canvas handlers
-        var self = this;
-
-        // hook up all the events we care about to generate actions from
-        canvas.onkeydown = this.onKeyDown.bind(self);
-        canvas.onclick = this.onClick.bind(self);
-        canvas.onmousemove = this.onMouseMove.bind(self);
-
-        this.tickToken = setInterval(function () {
-            self.gameTick();
-        }, _constants.Constants.GAME_TICK_MS);
     }
 
-    _createClass(Actions, [{
-        key: "onKeyDown",
+    _createClass(PlayerActions, [{
+        key: 'subscribeEvents',
+        value: function subscribeEvents(canvas) {
+            this.canvas = canvas;
+            // not sure how or why, but 'this' ends up as WINDOW in game tick.
+            // seems like a transpile bug or setInterval binding by default.
+            // same thing happens with canvas handlers
+            var self = this;
+
+            // hook up all the events we care about to generate actions from
+            // :(
+            document.addEventListener('keydown', this.onKeyDown.bind(self));
+            //canvas.onkeydown = this.onKeyDown.bind(self);
+            canvas.onclick = this.onClick.bind(self);
+            canvas.onmousemove = this.onMouseMove.bind(self);
+        }
+    }, {
+        key: 'unsubscribeEvents',
+        value: function unsubscribeEvents() {
+            document.removeEventListener('keydown');
+            //canvas.onkeydown = this.onKeyDown.bind(self);
+            this.canvas.onclick = null;
+            this.canvas.onmousemove = null;
+        }
+    }, {
+        key: 'onKeyDown',
         value: function onKeyDown(evt) {
             this._store.dispatch({
                 type: _constants.Constants.KEYDOWN,
@@ -14729,7 +14757,7 @@ var Actions = exports.Actions = function () {
             });
         }
     }, {
-        key: "onClick",
+        key: 'onClick',
         value: function onClick(evt) {
             this._store.dispatch({
                 type: _constants.Constants.CLICK,
@@ -14737,30 +14765,19 @@ var Actions = exports.Actions = function () {
             });
         }
     }, {
-        key: "onMouseMove",
+        key: 'onMouseMove',
         value: function onMouseMove(evt) {
             this._store.dispatch({
                 type: _constants.Constants.MOUSEMOVE,
                 data: evt
             });
         }
-    }, {
-        key: "gameTick",
-        value: function gameTick() {
-            if (!this._store) {
-                clearInterval(this.tickToken);
-                return;
-            }
-            this._store.dispatch({
-                type: _constants.Constants.GAME_TICK
-            });
-        }
     }]);
 
-    return Actions;
+    return PlayerActions;
 }();
 
-},{"./constants":19}],19:[function(require,module,exports){
+},{"../constants":19}],19:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -14769,7 +14786,7 @@ Object.defineProperty(exports, "__esModule", {
 var Constants = exports.Constants = {
     GAME_TICK: "_gameTick",
 
-    GAME_TICK_MS: 25, // 16.6 60fps
+    GAME_TICK_MS: 33, // 16.6 60fps
 
     CLICK: "_click", //Symbol("CLICK"),
     MOUSEMOVE: "_moouseMove", // Symbol("mouseMOve"),
@@ -14785,7 +14802,8 @@ var Constants = exports.Constants = {
     WIDTH: 800,
     HEIGHT: 600,
     PADDLE_WIDTH: 20,
-    PADDLE_HEIGHT: 100
+    PADDLE_HEIGHT: 100,
+    EDGE_PAD: 4
 };
 
 exports.default = Constants;
@@ -14794,7 +14812,7 @@ exports.default = Constants;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
-        value: true
+    value: true
 });
 exports.Draw = undefined;
 
@@ -14805,78 +14823,76 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 var _constants = require("./constants");
 
+var _ramda = require("ramda");
+
+var R = _interopRequireWildcard(_ramda);
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var Draw = exports.Draw = function () {
-        function Draw(ctx) {
-                _classCallCheck(this, Draw);
+    function Draw() {
+        _classCallCheck(this, Draw);
+    }
 
-                this.ctx = ctx;
+    _createClass(Draw, null, [{
+        key: "update",
+        value: function update(ctx, state) {
+            ctx.fillStyle = "black";
+
+            ctx.fillRect(0, 0, _constants.Constants.WIDTH, _constants.Constants.HEIGHT);
+
+            var halfWidth = _constants.Constants.WIDTH / 2;
+
+            Draw.drawMidline(ctx, halfWidth);
+
+            Draw.drawScores(ctx, state.game, halfWidth);
+
+            Draw.drawBall(ctx, state.ball);
+
+            Draw.drawBats(ctx, state);
         }
+    }, {
+        key: "drawBall",
+        value: function drawBall(ctx, ball) {
+            ctx.fillStyle = "white";
+            ctx.fillRect(ball.get('x'), ball.get('y'), ball.get('diameter'), ball.get('diameter'));
+        }
+    }, {
+        key: "drawScores",
+        value: function drawScores(ctx, state, halfWidth) {
+            ctx.fillStyle = "white";
+            ctx.font = "12px Verdana";
 
-        _createClass(Draw, [{
-                key: "update",
-                value: function update(state) {
-                        var ctx = this.ctx;
-                        var halfWidth = _constants.Constants.WIDTH / 2;
+            ctx.fillText("redux pong", halfWidth - 25, 25); //JSON.stringify(state), 10, 25);
+            ctx.fillText("Player: " + state.get('playerScore'), 5, _constants.Constants.HEIGHT - 25); //JSON.stringify(state), 10, 25);
+            ctx.fillText("CPU: " + state.get('playerScore'), _constants.Constants.WIDTH - 50, _constants.Constants.HEIGHT - 25); //JSON.stringify(state), 10, 25);
+        }
+    }, {
+        key: "drawBats",
+        value: function drawBats(ctx, state) {
+            ctx.fillStyle = "white";
+            R.map(function (s) {
+                ctx.fillRect(s.get('x'), s.get('y'), _constants.Constants.PADDLE_WIDTH, _constants.Constants.PADDLE_HEIGHT);
+            }, [state.player, state.cpu]);
+        }
+    }, {
+        key: "drawMidline",
+        value: function drawMidline(ctx, halfWidth) {
+            ctx.setLineDash([5, 10]);
+            ctx.strokeStyle = "white";
+            ctx.beginPath();
+            ctx.moveTo(halfWidth, 0);
+            ctx.lineTo(halfWidth, _constants.Constants.HEIGHT);
+            ctx.stroke();
+        }
+    }]);
 
-                        ctx.font = "20px Georgia";
-                        ctx.fillStyle = "black";
-                        ctx.fillRect(0, 0, _constants.Constants.WIDTH, _constants.Constants.HEIGHT);
-
-                        ctx.setLineDash([5, 10]);
-                        ctx.strokeStyle = "white";
-                        ctx.beginPath();
-                        ctx.moveTo(halfWidth, 0);
-                        ctx.lineTo(halfWidth, _constants.Constants.HEIGHT);
-                        ctx.stroke();
-
-                        ctx.fillStyle = "white";
-                        ctx.font = "12px Verdana";
-                        ctx.fillStyle = "white";
-                        ctx.fillText("redux pong", halfWidth - 25, 25); //JSON.stringify(state), 10, 25);
-
-                        ctx.fillRect(state.ball.get('x'), state.ball.get('y'), state.ball.get('diameter'), state.ball.get('diameter'));
-
-                        ctx.fillRect(state.player.get('x'), state.player.get('y'), _constants.Constants.PADDLE_WIDTH, _constants.Constants.PADDLE_HEIGHT);
-                }
-        }]);
-
-        return Draw;
+    return Draw;
 }();
 
-},{"./constants":19}],21:[function(require,module,exports){
-"use strict";
-
-var _redux = require("redux");
-
-var _draw = require("./draw");
-
-var _actions = require("./actions");
-
-var _Constants = require("./Constants");
-
-var _cpu = require("./reducers/cpu");
-
-var _game = require("./reducers/game");
-
-var _player = require("./reducers/player");
-
-var _ball = require("./reducers/ball");
-
-var canvas = document.getElementById("canvas");
-canvas.width = _Constants.Constants.WIDTH;
-canvas.height = _Constants.Constants.HEIGHT;
-console.log(_cpu.cpu);
-var gameStore = (0, _redux.createStore)((0, _redux.combineReducers)({ cpu: _cpu.cpu, game: _game.game, player: _player.player, ball: _ball.ball }));
-var actions = new _actions.Actions(gameStore, canvas);
-var draw = new _draw.Draw(canvas.getContext("2d"));
-
-gameStore.subscribe(function () {
-    draw.update(gameStore.getState());
-});
-
-},{"./Constants":17,"./actions":18,"./draw":20,"./reducers/ball":22,"./reducers/cpu":23,"./reducers/game":24,"./reducers/player":25,"redux":9}],22:[function(require,module,exports){
+},{"./constants":19,"ramda":3}],21:[function(require,module,exports){
 /**
  * Created by Dexter on 5/11/2016.
  */
@@ -14902,7 +14918,7 @@ function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj;
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var getDefaultBallState = function getDefaultBallState() {
+function getDefault() {
     return _immutable2.default.Map({
         speed: 10,
         diameter: 15,
@@ -14911,10 +14927,10 @@ var getDefaultBallState = function getDefaultBallState() {
         y: _Constants.Constants.HEIGHT / 2,
         ticks: 0
     });
-};
+}
 
 var ball = exports.ball = function ball() {
-    var state = arguments.length <= 0 || arguments[0] === undefined ? getDefaultBallState() : arguments[0];
+    var state = arguments.length <= 0 || arguments[0] === undefined ? getDefault() : arguments[0];
     var action = arguments[1];
 
     switch (action.type) {
@@ -14934,21 +14950,18 @@ var ball = exports.ball = function ball() {
             }
             return state.merge({
                 x: newX,
-                direction: isLeft ? _Constants.Constants.Direction.Left : _Constants.Constants.Direction.Right,
-                ticks: state.get('ticks') + 1
+                direction: isLeft ? _Constants.Constants.Direction.Left : _Constants.Constants.Direction.Right
             });
 
     }
+    //ticks: state.get('ticks') + 1
     return state;
 };
 
-exports.default = ball;
-
-},{"../Constants":17,"immutable":1,"ramda":3}],23:[function(require,module,exports){
+},{"../Constants":19,"immutable":1,"ramda":3}],22:[function(require,module,exports){
 /**
- * Created by Dexter on 5/11/2016.
+ * Created by Dexter on 5/15/2016.
  */
-
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -14970,24 +14983,21 @@ function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj;
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var getDefaultCpuState = function getDefaultCpuState() {
+var getDefault = function getDefault() {
     return _immutable2.default.Map({
-        x: _Constants.Constants.WIDTH - _Constants.Constants.PADDLE_WIDTH,
-        y: 10
+        x: _Constants.Constants.WIDTH - _Constants.Constants.PADDLE_WIDTH - _Constants.Constants.EDGE_PAD,
+        y: _Constants.Constants.EDGE_PAD
     });
 };
 
 var cpu = exports.cpu = function cpu() {
-    var state = arguments.length <= 0 || arguments[0] === undefined ? getDefaultCpuState() : arguments[0];
+    var state = arguments.length <= 0 || arguments[0] === undefined ? getDefault() : arguments[0];
     var action = arguments[1];
 
-    switch (action.type) {}
     return state;
 };
 
-exports.default = cpu;
-
-},{"../Constants":17,"immutable":1,"ramda":3}],24:[function(require,module,exports){
+},{"../Constants":19,"immutable":1,"ramda":3}],23:[function(require,module,exports){
 /**
  * Created by Dexter on 5/11/2016.
  */
@@ -15015,9 +15025,9 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 var getDefaultGameState = function getDefaultGameState() {
     return _immutable2.default.Map({
+        //ticks: 0,
         playerScore: 0,
-        cpuScore: 0,
-        message: ''
+        cpuScore: 0
     });
 };
 
@@ -15025,17 +15035,22 @@ var game = exports.game = function game() {
     var state = arguments.length <= 0 || arguments[0] === undefined ? getDefaultGameState() : arguments[0];
     var action = arguments[1];
 
+    var interim = _immutable2.default.Map({
+        playerScore: 0,
+        cpuScore: 0
+    });
     switch (action.type) {
         case _Constants.Constants.GAME_TICK:
-            return _immutable2.default.Map({});
+            // TODO:
+            break;
 
     }
-    return state;
+    return interim;
 };
 
 exports.default = game;
 
-},{"../Constants":17,"immutable":1,"ramda":3}],25:[function(require,module,exports){
+},{"../Constants":19,"immutable":1,"ramda":3}],24:[function(require,module,exports){
 /**
  * Created by Dexter on 5/11/2016.
  */
@@ -15063,8 +15078,10 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 var getDefaultPlayerState = function getDefaultPlayerState() {
     return _immutable2.default.Map({
-        x: _Constants.Constants.PADDLE_WIDTH,
-        y: 10
+        x: _Constants.Constants.EDGE_PAD,
+        y: _Constants.Constants.WIDTH / 2,
+        direction: _Constants.Constants.Direction.Down,
+        lastMouseY: _Constants.Constants.WIDTH / 2
     });
 };
 
@@ -15074,18 +15091,102 @@ var player = exports.player = function player() {
 
     switch (action.type) {
         case _Constants.Constants.MOUSEMOVE:
-            return _immutable2.default.Map({
-                //...state,
-                x: action.data.clientX,
-                y: action.data.clientY
+            // used to do everything in both events, but that caused
+            // double update rate when wiggling mouse around
+            return state.merge({
+                lastMouseY: action.data.clientY
+            });
+            break;
+
+        case _Constants.Constants.GAME_TICK:
+            // on game tick , drift to last mousePos
+            // our X,Y is top left of paddle. handle clips
+            // if the mouse is above paddle center, we want to go up
+            // RIP mouse code, make sure to update delta, direction, we continue to move on tick
+            var y = state.get('y');
+            var mid = y + _Constants.Constants.PADDLE_HEIGHT / 2;
+            var mouseY = state.get('lastMouseY'); // action.data && action.data.clientY ? action.data.clientY : state.get('lastMouseY');
+            var delta = Math.abs(mouseY - mid);
+            var bottomClip = _Constants.Constants.HEIGHT - _Constants.Constants.PADDLE_HEIGHT;
+
+            if (delta <= 2) {
+                return state;
+            }
+
+            // 'below' is visually here
+            var belowMid = mouseY > mid;
+            var adjustedDelta = Math.min(10, delta); // max delta
+            var direction = belowMid ? _Constants.Constants.Direction.Down : _Constants.Constants.Direction.Up;
+
+            //y = Math.max(0, Math.min(Constants.HEIGHT, belowMid ? y + adjustedDelta : y - adjustedDelta) - Constants.PADDLE_HEIGHT);
+            if (direction === _Constants.Constants.Direction.Down) {
+                y += adjustedDelta;
+
+                if (y >= bottomClip) {
+                    adjustedDelta = 0;
+                    y = bottomClip;
+                }
+            } else {
+                y -= adjustedDelta;
+                if (y <= 10) {
+                    y = 10;
+                    adjustedDelta = 0;
+                }
+            }
+
+            return state.merge({
+                y: y,
+                direction: direction,
+                lastMouseY: mouseY
             });
         default:
             return state;
     }
 };
-exports.default = player;
 
-},{"../Constants":17,"immutable":1,"ramda":3}]},{},[21])
+},{"../Constants":19,"immutable":1,"ramda":3}],25:[function(require,module,exports){
+"use strict";
+
+var _redux = require("redux");
+
+var _draw = require("./draw");
+
+var _PlayerActions = require("./actions/PlayerActions");
+
+var _GameActions = require("./actions/GameActions");
+
+var _Constants = require("./Constants");
+
+var _game = require("./reducers/game");
+
+var _ball = require("./reducers/ball");
+
+var _player = require("./reducers/player");
+
+var _cpu = require("./reducers/cpu");
+
+var canvas = document.getElementById("canvas");
+canvas.width = _Constants.Constants.WIDTH;
+canvas.height = _Constants.Constants.HEIGHT;
+
+var gameStore = (0, _redux.createStore)((0, _redux.combineReducers)({
+    game: _game.game,
+    ball: _ball.ball,
+    player: _player.player,
+    cpu: _cpu.cpu
+}));
+
+var playerActions = new _PlayerActions.PlayerActions(gameStore);
+var gameActions = new _GameActions.GameActions(gameStore);
+
+playerActions.subscribeEvents(canvas);
+
+var ctx = canvas.getContext("2d");
+var unsubscribe = gameStore.subscribe(function () {
+    return _draw.Draw.update(ctx, gameStore.getState());
+});
+
+},{"./Constants":19,"./actions/GameActions":17,"./actions/PlayerActions":18,"./draw":20,"./reducers/ball":21,"./reducers/cpu":22,"./reducers/game":23,"./reducers/player":24,"redux":9}]},{},[25])
 
 
 //# sourceMappingURL=bundle.js.map
